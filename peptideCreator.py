@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-import math
-import sys
 from constants import aminoAcidMasses, params
-from pprint import pprint
+import sys
 
 proteins = []
 
@@ -54,6 +52,11 @@ class Protein(object):
         self.sequence = sequence
         self.peptides = []
         proteins.append(self)
+
+if len(sys.argv) < 2:
+    print "\n\t###  Please supply one or more .fasta files for digestion"
+    print "\t###  example:   ./peptideCreator.py test.fasta\n"
+    sys.exit(1)
 
 for fname in sys.argv[1:]:
     for p in get_proteins(fname):
