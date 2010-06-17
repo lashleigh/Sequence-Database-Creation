@@ -18,18 +18,26 @@ def get_proteins(fname):
             sequence += line.strip()
     yield Protein(name, sequence)
 
-def badChar(c):
-    return c == '*'
+def generateSemiTryptic(protein, semiPeps):
+    for pep in protein.peptides:
+        for i in range(1, len(pep.sequence)):
+            if (len(pep.sequence) - i) >= params['MIN_LEN_PEPTIDE']:
+                if goodPeptide(pep.neutralMass, pep.sequence[i:]):
+                    newPep = Peptide(pep.sequence[i:], massOfPep(pep.sequence[i:]))
+                    semiPeps.append(newPep)
+                    print pep.sequence[:i], newPep
+            else:
+                break
 
 def findNextPeptide(proteinSequence, protein):
-    pepSeq, numPTS, numM, numRK = '', 0, 0, 0
+    pepSeq, numPTS, numM = '', 0, 0
     for i, char in enumerate(proteinSequence):
         if badChar(char):
             continue
         pepSeq += char
-        numPTS, numM, numRK = checkForSpecialChar(char, numPTS, numM, numRK)
+        numPTS, numM = checkForSpecialChar(char, numPTS, numM)
         if endPeptide(pepSeq):
-            newPep = Peptide(pepSeq, massOfPep(pepSeq), numRK, numPTS, numM, [protein])
+            newPep = Peptide(pepSeq, massOfPep(pepSeq), 1, numPTS, numM, [protein])
             globalPeptideList.append(newPep)
             return(newPep, proteinSequence[i+1:])
     return(None, None)
@@ -51,7 +59,7 @@ def findGoodPeptides(temp):
         for i in range(params['ALLOWED_MISSED_CLEAVAGES'] + 1):
             if i < len(temp):
                 potentialPep += temp[i]
-                if goodPeptide(potentialPep):
+                if goodPeptide(potentialPep.neutralMass, potentialPep.sequence):
                     proteinPeptideList.append(potentialPep)
         proteinPeptideList += findGoodPeptides(temp[1:])
     return proteinPeptideList 
@@ -98,9 +106,10 @@ for fname in sys.argv[1:]:
         #print protein.sequence
         protein.peptides = findGoodPeptides(temp)
         if params['SEMI_TRYPTIC']:
-            print 'oh shit'
+            semiPeps = []
+            generateSemiTryptic(protein, semiPeps)
         #for pep in sorted(protein.peptides, key = lambda peptide: peptide.neutralMass):
         #    print pep.neutralMass,'\t', pep.numPTS, pep.numM, pep, pep.peptideProteinList
-        for pep in protein.peptides:
-            print pep.numPTS, pep.numRK, pep
+        #for pep in protein.peptides:
+        #    print pep.numPTS, pep.numRK, pep
     
