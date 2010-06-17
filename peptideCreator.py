@@ -3,7 +3,7 @@ from constants import aminoAcidMasses, params
 from helpers import *
 import sys
 
-proteins = []
+globalProteinList = []
 globalPeptideList = []
 
 def get_proteins(fname):
@@ -18,14 +18,19 @@ def get_proteins(fname):
             sequence += line.strip()
     yield Protein(name, sequence)
 
+def badChar(c):
+    return c == '*'
+
 def findNextPeptide(proteinSequence, protein):
     pepSeq, numPTS, numM = '', 0, 0
     for i, char in enumerate(proteinSequence):
+        if badChar(char):
+            continue
         pepSeq += char
         numPTS += checkPhoso(char)
         numM += checkMeth(char)
         if endPeptide(pepSeq):
-            newPep = Peptide(protein, pepSeq, massOfPep(pepSeq), numPTS, numM)
+            newPep = Peptide(pepSeq, massOfPep(pepSeq), numPTS, numM, [protein])
             globalPeptideList.append(newPep)
             return(newPep, proteinSequence[i+1:])
     return(None, None)
@@ -57,26 +62,26 @@ class Protein(object):
         self.name = name
         self.sequence = sequence
         self.peptides = []
-        proteins.append(self)
+        globalProteinList.append(self)
 
     def __repr__(self):
-        return self.name
+        return self.name[:7]
 
 class Peptide(object):
-    def __init__(self, protein = '', sequence = '', neutralMass = 0, numPTS = 0, numM = 0):
-        self.protein = protein
+    def __init__(self, sequence = '', neutralMass = 0, numPTS = 0, numM = 0, peptideProteinList = set()):
         self.sequence = sequence
         self.neutralMass = neutralMass
         self.numPTS = numPTS
         self.numM = numM 
+        self.peptideProteinList = peptideProteinList
 
     def __add__(self, other):
-        protein = other.protein
         sequence = self.sequence + other.sequence
         neutralMass = self.neutralMass + other.neutralMass
         numPTS = self.numPTS + other.numPTS
         numM = self.numM + other.numM 
-        return Peptide(protein, sequence, neutralMass, numPTS, numM)
+        proteins = self.peptideProteinList.union(other.peptideProteinList)
+        return Peptide(sequence, neutralMass, numPTS, numM, proteins)
 
     def __repr__(self):
         return self.sequence
@@ -89,10 +94,11 @@ if len(sys.argv) < 2:
 for fname in sys.argv[1:]:
     for protein in get_proteins(fname):
         temp = digest(protein.sequence, protein)
-        print protein.sequence
+        #print protein.sequence
         protein.peptides = findGoodPeptides(temp)
-        for pep in protein.peptides:
-            print pep
+        for pep in sorted(protein.peptides, key = lambda peptide: peptide.neutralMass):
+            print pep.neutralMass,'\t', pep.numPTS, pep.numM, pep, pep.peptideProteinList
+    
 
 
 
