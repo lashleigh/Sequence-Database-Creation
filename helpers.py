@@ -23,3 +23,5 @@ def goodPeptide(neutralMass, sequence):
     mass, length = neutralMass, len(sequence)
     return mass >= params['MIN_PEPTIDE_MASS'] and mass <= params['MAX_PEPTIDE_MASS'] and length >= params['MIN_LEN_PEPTIDE'] and length <= params['MAX_LEN_PEPTIDE']
 
+def enzymeChar(c):
+    return c == 'K' or c == 'R'
