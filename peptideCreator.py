@@ -22,15 +22,14 @@ def badChar(c):
     return c == '*'
 
 def findNextPeptide(proteinSequence, protein):
-    pepSeq, numPTS, numM = '', 0, 0
+    pepSeq, numPTS, numM, numRK = '', 0, 0, 0
     for i, char in enumerate(proteinSequence):
         if badChar(char):
             continue
         pepSeq += char
-        numPTS += checkPhoso(char)
-        numM += checkMeth(char)
+        numPTS, numM, numRK = checkForSpecialChar(char, numPTS, numM, numRK)
         if endPeptide(pepSeq):
-            newPep = Peptide(pepSeq, massOfPep(pepSeq), numPTS, numM, [protein])
+            newPep = Peptide(pepSeq, massOfPep(pepSeq), numRK, numPTS, numM, [protein])
             globalPeptideList.append(newPep)
             return(newPep, proteinSequence[i+1:])
     return(None, None)
@@ -68,9 +67,10 @@ class Protein(object):
         return self.name[:7]
 
 class Peptide(object):
-    def __init__(self, sequence = '', neutralMass = 0, numPTS = 0, numM = 0, peptideProteinList = set()):
+    def __init__(self, sequence = '', neutralMass = 0, numRK = 0, numPTS = 0, numM = 0, peptideProteinList = set()):
         self.sequence = sequence
         self.neutralMass = neutralMass
+        self.numRK = numRK
         self.numPTS = numPTS
         self.numM = numM 
         self.peptideProteinList = peptideProteinList
@@ -78,10 +78,11 @@ class Peptide(object):
     def __add__(self, other):
         sequence = self.sequence + other.sequence
         neutralMass = self.neutralMass + other.neutralMass
+        numRK = self.numRK + other.numRK
         numPTS = self.numPTS + other.numPTS
         numM = self.numM + other.numM 
         proteins = self.peptideProteinList.union(other.peptideProteinList)
-        return Peptide(sequence, neutralMass, numPTS, numM, proteins)
+        return Peptide(sequence, neutralMass, numRK, numPTS, numM, proteins)
 
     def __repr__(self):
         return self.sequence
@@ -96,10 +97,10 @@ for fname in sys.argv[1:]:
         temp = digest(protein.sequence, protein)
         #print protein.sequence
         protein.peptides = findGoodPeptides(temp)
-        for pep in sorted(protein.peptides, key = lambda peptide: peptide.neutralMass):
-            print pep.neutralMass,'\t', pep.numPTS, pep.numM, pep, pep.peptideProteinList
+        if params['SEMI_TRYPTIC']:
+            print 'oh shit'
+        #for pep in sorted(protein.peptides, key = lambda peptide: peptide.neutralMass):
+        #    print pep.neutralMass,'\t', pep.numPTS, pep.numM, pep, pep.peptideProteinList
+        for pep in protein.peptides:
+            print pep.numPTS, pep.numRK, pep
     
-
-
-
-

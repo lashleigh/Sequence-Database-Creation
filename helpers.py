@@ -1,16 +1,13 @@
 from constants import aminoAcidMasses, params
 
-def checkPhoso(char):
+def checkForSpecialChar(char, numPhospho, numM, numRK):
     if char == 'P' or char == 'S' or char == 'T':
-        return 1 
-    else:
-        return 0 
-
-def checkMeth(char):
-    if char == 'M':
-        return 1
-    else:
-        return 0
+        numPhospho += 1
+    elif char == 'M':
+        numM += 1
+    elif char == 'K' or char == 'R':
+        numRK += 1
+    return(numPhospho, numM, numRK)
 
 def validTryptic(peptideSequence):
     return peptideSequence.endswith('K') or peptideSequence.endswith('R')
