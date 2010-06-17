@@ -25,3 +25,5 @@ def goodPeptide(neutralMass, sequence):
 
 def enzymeChar(c):
     return c == 'K' or c == 'R'
+
+

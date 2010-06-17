@@ -20,16 +20,17 @@ def get_proteins(fname):
 
 def generateSemiTryptic(protein, semiPeps):
     for pep in protein.peptides:
-        localKR = 0
+        numPassedCleavages = 0
+        numPassedPTS, numPassedM = 0, 0
         for i in range(1, len(pep.sequence)):
-            if localKR < max(1, pep.numRK - 1):
-                if (len(pep.sequence) - i) >= params['MIN_LEN_PEPTIDE']:
-                    if goodPeptide(pep.neutralMass, pep.sequence[i:]):
-                        newPep = Peptide(pep.sequence[i:], massOfPep(pep.sequence[i:]), pep.numRK, pep.numPTS, pep.numM, pep.peptideProteinList)
-                        semiPeps.append(newPep)
-                        print localKR, newPep.numRK, pep.sequence[:i], newPep
+            if numPassedCleavages < max(1, pep.numRK - 1):
+                if goodPeptide(pep.neutralMass, pep.sequence[i:]):
+                    newPep = Peptide(pep.sequence[i:], massOfPep(pep.sequence[i:]), pep.numRK, pep.numPTS - numPassedPTS, pep.numM - numPassedM, pep.peptideProteinList)
+                    semiPeps.append(newPep)
+                    #print numPassedCleavages, newPep.numRK, pep.sequence[:i], newPep
                 if enzymeChar(pep.sequence[i]):
-                    localKR += 1
+                    numPassedCleavages += 1
+                numPassedPTS, numPassedM = checkForSpecialChar(pep.sequence[i], numPassedPTS, numPassedM)
 
 def findNextPeptide(proteinSequence, protein):
     pepSeq, numPTS, numM = '', 0, 0
@@ -112,7 +113,7 @@ for fname in sys.argv[1:]:
             generateSemiTryptic(protein, semiPeps)
             protein.peptides.extend(semiPeps)
         #for pep in sorted(protein.peptides, key = lambda peptide: peptide.neutralMass):
-        #    print pep.neutralMass,'\t', pep.numPTS, pep.numM, pep, pep.peptideProteinList
-        #for pep in protein.peptides:
-        #    print pep.numPTS, pep.numRK, pep
+        #    print pep.neutralMass,'\t', pep.numPTS, pep.numM, pep.numRK, pep, pep.peptideProteinList
+        for pep in protein.peptides:
+            print pep.numPTS, pep.numM, pep.numRK, pep
     
