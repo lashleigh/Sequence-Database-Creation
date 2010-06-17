@@ -18,27 +18,15 @@ def get_proteins(fname):
             sequence += line.strip()
     yield Protein(name, sequence)
 
-def checkPhoso(char):
-    if char == 'P' or char == 'S' or char == 'T':
-        return 1 
-    else:
-        return 0 
-
-def checkMeth(char):
-    if char == 'M':
-        return 1
-    else:
-        return 0
-
-def findNextPeptide(seq, protein):
+def findNextPeptide(proteinSequence, protein):
     pepSeq, numPTS, numM = '', 0, 0
-    for i, char in enumerate(seq):
+    for i, char in enumerate(proteinSequence):
         pepSeq += char
         numPTS += checkPhoso(char)
         numM += checkMeth(char)
         if endPeptide(pepSeq):
             newPep = Peptide(protein, pepSeq, massOfPep(pepSeq), numPTS, numM)
-            return(newPep, seq[i+1:])
+            return(newPep, proteinSequence[i+1:])
     return(None, None)
 
 def digest(proteinSequence, protein):
@@ -51,17 +39,20 @@ def digest(proteinSequence, protein):
                 tempPeptideList += digest(next_sequence, protein)
     return tempPeptideList 
 
-def findGoodPeptides(peptides, temp):
+def findGoodPeptides(temp):
+    proteinPeptideList = []
     if temp:
         potentialPep = Peptide()
         for i in range(params['ALLOWED_MISSED_CLEAVAGES'] + 1):
             if i < len(temp):
                 potentialPep += temp[i]
                 if goodPeptide(potentialPep):
-                    peptides.append(potentialPep)
+                    print i, potentialPep.sequence
+                    proteinPeptideList.append(potentialPep)
             else:
                 break
-        findGoodPeptides(peptides, temp[1:])
+        proteinPeptideList += findGoodPeptides(temp[1:])
+    return proteinPeptideList 
 
 class Protein(object):
     def __init__(self, name, sequence, peptides = []):
@@ -96,8 +87,6 @@ if len(sys.argv) < 2:
 for fname in sys.argv[1:]:
     for protein in get_proteins(fname):
         temp = digest(protein.sequence, protein)
-        findGoodPeptides(protein.peptides, temp)
-        #if params['ALLOWED_MISSED_CLEAVAGES']:
-        #    protein.peptides = miscleave(protein.peptides, params['ALLOWED_MISSED_CLEAVAGES'])
+        protein.peptides = findGoodPeptides(temp)
         for pep in protein.peptides:
             print pep.sequence, pep.neutralMass
