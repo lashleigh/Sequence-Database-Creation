@@ -1,16 +1,16 @@
 from constants import aminoAcidMasses, params
 
-def validTryptic(pep):
-    return pep.endswith('K') or pep.endswith('R')
+def validTryptic(peptideSequence):
+    return peptideSequence.endswith('K') or peptideSequence.endswith('R')
 
-def endPeptide(pep):
-    return validTryptic(pep)
+def endPeptide(peptideSequence):
+    return validTryptic(peptideSequence)
 
-def massOfPep(peptide):
-    return sum([aminoAcidMasses[c] for c in peptide])
+def massOfPep(peptideSequence):
+    return sum([aminoAcidMasses[c] for c in peptideSequence])
 
 def goodPeptide(pep):
-    mass, length = massOfPep(pep), len(pep)
+    mass, length = pep.neutralMass, len(pep.sequence)
     return mass >= params['MIN_PEPTIDE_MASS'] and mass <= params['MAX_PEPTIDE_MASS'] and length >= params['MIN_LEN_PEPTIDE'] and length <= params['MAX_LEN_PEPTIDE']
 
 

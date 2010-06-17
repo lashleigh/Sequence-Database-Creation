@@ -4,6 +4,7 @@ from helpers import *
 import sys
 
 proteins = []
+globalPeptideList = []
 
 def get_proteins(fname):
     name, sequence = None, None
@@ -17,33 +18,47 @@ def get_proteins(fname):
             sequence += line.strip()
     yield Protein(name, sequence)
 
-def findNextPeptide(seq):
-    pep = ''
+def checkPhoso(char):
+    if char == 'P' or char == 'S' or char == 'T':
+        return 1 
+    else:
+        return 0 
+
+def checkMeth(char):
+    if char == 'M':
+        return 1
+    else:
+        return 0
+
+def findNextPeptide(seq, protein):
+    pepSeq, numPTS, numM = '', 0, 0
     for i, char in enumerate(seq):
-        pep += char
-        if endPeptide(pep):
-            return(pep, seq[i+1:])
+        pepSeq += char
+        numPTS += checkPhoso(char)
+        numM += checkMeth(char)
+        if endPeptide(pepSeq):
+            newPep = Peptide(protein, pepSeq, massOfPep(pepSeq), numPTS, numM)
+            return(newPep, seq[i+1:])
     return(None, None)
 
-def digest(sequence):
-    peptides = []
-    if sequence:
-        peptide, next_sequence = findNextPeptide(sequence)
+def digest(proteinSequence, protein):
+    tempPeptideList = []
+    if proteinSequence:
+        peptide, next_sequence = findNextPeptide(proteinSequence, protein)
         if peptide:
-            peptides.append(peptide)
+            tempPeptideList.append(peptide)
             if next_sequence:
-                peptides += digest(next_sequence)
-    return peptides 
+                tempPeptideList += digest(next_sequence, protein)
+    return tempPeptideList 
 
 def findGoodPeptides(peptides, temp):
     if temp:
-        potentialPep = ''
+        potentialPep = Peptide()
         for i in range(params['ALLOWED_MISSED_CLEAVAGES'] + 1):
             if i < len(temp):
                 potentialPep += temp[i]
                 if goodPeptide(potentialPep):
                     peptides.append(potentialPep)
-                    print i, potentialPep
             else:
                 break
         findGoodPeptides(peptides, temp[1:])
@@ -56,9 +71,22 @@ class Protein(object):
         proteins.append(self)
 
 class Peptide(object):
-    def __intit__(self, protein, sequence, neutralMass = 0, numPTS = 0, numM = 0):
-        self.protein = []
+    def __init__(self, protein = '', sequence = '', neutralMass = 0, numPTS = 0, numM = 0):
+        self.protein = protein
         self.sequence = sequence
+        self.neutralMass = neutralMass
+        self.numPTS = numPTS
+        self.numM = numM 
+        globalPeptideList.append(self)
+
+    def __add__(self, other):
+        self.protein = other.protein
+        self.sequence += other.sequence
+        self.neutralMass += other.neutralMass
+        self.numPTS += other.numPTS
+        self.numM += other.numM 
+        return Peptide(self.protein, self.sequence, self.neutralMass, self.numPTS, self.numM)
+
 
 if len(sys.argv) < 2:
     print "\n\t###  Please supply one or more .fasta files for digestion"
@@ -66,13 +94,10 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 for fname in sys.argv[1:]:
-    for p in get_proteins(fname):
-        temp = digest(p.sequence)
-        findGoodPeptides(p.peptides, temp)
+    for protein in get_proteins(fname):
+        temp = digest(protein.sequence, protein)
+        findGoodPeptides(protein.peptides, temp)
         #if params['ALLOWED_MISSED_CLEAVAGES']:
-        #    p.peptides = miscleave(p.peptides, params['ALLOWED_MISSED_CLEAVAGES'])
-        print sorted(p.peptides)
-        print
-        #for pep in p.peptides:
-        #    print pep, massOfPep(pep)
-
+        #    protein.peptides = miscleave(protein.peptides, params['ALLOWED_MISSED_CLEAVAGES'])
+        for pep in protein.peptides:
+            print pep.sequence, pep.neutralMass

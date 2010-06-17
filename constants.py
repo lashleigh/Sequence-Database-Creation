@@ -47,7 +47,7 @@ aminoAcidMasses['Z'] = (aminoAcidMasses['Q'] + aminoAcidMasses['E']) / 2.0  # tr
 
 params['MIN_PEPTIDE_MASS'] =   500.0
 params['MAX_PEPTIDE_MASS'] =   6000
-params['ALLOWED_MISSED_CLEAVAGES'] = 2
+params['ALLOWED_MISSED_CLEAVAGES'] = 0
 params['MAX_LEN_PEPTIDE']  =   100
 params['MIN_LEN_PEPTIDE']  =   6
 params['MAX_LEN_DEFINITION'] = 50
