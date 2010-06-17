@@ -46,6 +46,19 @@ def digest(sequence, peptides):
             if next_sequence:
                 digest(next_sequence, peptides)
 
+def findGoodPeptides(peptides, temp):
+    if temp:
+        potentialPep = ''
+        for i in range(params['ALLOWED_MISSED_CLEAVAGES'] + 1):
+            if i < len(temp):
+                potentialPep += temp[i]
+                if goodPeptide(potentialPep):
+                    peptides.append(potentialPep)
+                    print i, potentialPep
+            else:
+                break
+        findGoodPeptides(peptides, temp[1:])
+
 class Protein(object):
     def __init__(self, name, sequence, peptides = []):
         self.name = name
@@ -60,10 +73,13 @@ if len(sys.argv) < 2:
 
 for fname in sys.argv[1:]:
     for p in get_proteins(fname):
-        digest(p.sequence, p.peptides)
+        temp = []
+        digest(p.sequence, temp)
+        findGoodPeptides(p.peptides, temp)
         #if params['ALLOWED_MISSED_CLEAVAGES']:
         #    p.peptides = miscleave(p.peptides, params['ALLOWED_MISSED_CLEAVAGES'])
-        print p.peptides
+        print sorted(p.peptides)
+        print
         #for pep in p.peptides:
         #    print pep, massOfPep(pep)
 
