@@ -26,6 +26,7 @@ def findNextPeptide(proteinSequence, protein):
         numM += checkMeth(char)
         if endPeptide(pepSeq):
             newPep = Peptide(protein, pepSeq, massOfPep(pepSeq), numPTS, numM)
+            globalPeptideList.append(newPep)
             return(newPep, proteinSequence[i+1:])
     return(None, None)
 
@@ -47,10 +48,7 @@ def findGoodPeptides(temp):
             if i < len(temp):
                 potentialPep += temp[i]
                 if goodPeptide(potentialPep):
-                    print i, potentialPep.sequence
                     proteinPeptideList.append(potentialPep)
-            else:
-                break
         proteinPeptideList += findGoodPeptides(temp[1:])
     return proteinPeptideList 
 
@@ -61,6 +59,9 @@ class Protein(object):
         self.peptides = []
         proteins.append(self)
 
+    def __repr__(self):
+        return self.name
+
 class Peptide(object):
     def __init__(self, protein = '', sequence = '', neutralMass = 0, numPTS = 0, numM = 0):
         self.protein = protein
@@ -68,16 +69,17 @@ class Peptide(object):
         self.neutralMass = neutralMass
         self.numPTS = numPTS
         self.numM = numM 
-        globalPeptideList.append(self)
 
     def __add__(self, other):
-        self.protein = other.protein
-        self.sequence += other.sequence
-        self.neutralMass += other.neutralMass
-        self.numPTS += other.numPTS
-        self.numM += other.numM 
-        return Peptide(self.protein, self.sequence, self.neutralMass, self.numPTS, self.numM)
+        protein = other.protein
+        sequence = self.sequence + other.sequence
+        neutralMass = self.neutralMass + other.neutralMass
+        numPTS = self.numPTS + other.numPTS
+        numM = self.numM + other.numM 
+        return Peptide(protein, sequence, neutralMass, numPTS, numM)
 
+    def __repr__(self):
+        return self.sequence
 
 if len(sys.argv) < 2:
     print "\n\t###  Please supply one or more .fasta files for digestion"
@@ -87,6 +89,11 @@ if len(sys.argv) < 2:
 for fname in sys.argv[1:]:
     for protein in get_proteins(fname):
         temp = digest(protein.sequence, protein)
+        print protein.sequence
         protein.peptides = findGoodPeptides(temp)
         for pep in protein.peptides:
-            print pep.sequence, pep.neutralMass
+            print pep
+
+
+
+
