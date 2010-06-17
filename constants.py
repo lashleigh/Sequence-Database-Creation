@@ -1,6 +1,9 @@
 aminoAcidMasses = {}
 params = {}
+
 useMonoisotopicMass = False
+digestionEnzym = 'Trypsin'
+
 if useMonoisotopicMass:
    H = aminoAcidMasses['h'] =  1.007825035
    O = aminoAcidMasses['o'] = 15.99491463

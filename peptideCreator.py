@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from constants import aminoAcidMasses, params
+from helpers import *
 import sys
 
 proteins = []
@@ -16,19 +17,6 @@ def get_proteins(fname):
             sequence += line.strip()
     yield Protein(name, sequence)
 
-def validTryptic(pep):
-    return pep.endswith('K') or pep.endswith('R')
-
-def endPeptide(pep):
-    return validTryptic(pep)
-
-def massOfPep(peptide):
-    return sum([aminoAcidMasses[c] for c in peptide])
-
-def goodPeptide(pep):
-    mass, length = massOfPep(pep), len(pep)
-    return mass >= params['MIN_PEPTIDE_MASS'] and mass <= params['MAX_PEPTIDE_MASS'] and length >= params['MIN_LEN_PEPTIDE'] and length <= params['MAX_LEN_PEPTIDE']
-
 def findNextPeptide(seq):
     pep = ''
     for i, char in enumerate(seq):
@@ -37,14 +25,15 @@ def findNextPeptide(seq):
             return(pep, seq[i+1:])
     return(None, None)
 
-def digest(sequence, peptides):
+def digest(sequence):
+    peptides = []
     if sequence:
         peptide, next_sequence = findNextPeptide(sequence)
         if peptide:
-            if goodPeptide(peptide):
-                peptides.append(peptide)
+            peptides.append(peptide)
             if next_sequence:
-                digest(next_sequence, peptides)
+                peptides += digest(next_sequence)
+    return peptides 
 
 def findGoodPeptides(peptides, temp):
     if temp:
@@ -66,6 +55,11 @@ class Protein(object):
         self.peptides = []
         proteins.append(self)
 
+class Peptide(object):
+    def __intit__(self, protein, sequence, neutralMass = 0, numPTS = 0, numM = 0):
+        self.protein = []
+        self.sequence = sequence
+
 if len(sys.argv) < 2:
     print "\n\t###  Please supply one or more .fasta files for digestion"
     print "\t###  example:   ./peptideCreator.py test.fasta\n"
@@ -73,8 +67,7 @@ if len(sys.argv) < 2:
 
 for fname in sys.argv[1:]:
     for p in get_proteins(fname):
-        temp = []
-        digest(p.sequence, temp)
+        temp = digest(p.sequence)
         findGoodPeptides(p.peptides, temp)
         #if params['ALLOWED_MISSED_CLEAVAGES']:
         #    p.peptides = miscleave(p.peptides, params['ALLOWED_MISSED_CLEAVAGES'])
