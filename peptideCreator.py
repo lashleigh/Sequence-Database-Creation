@@ -2,9 +2,11 @@
 from constants import aminoAcidMasses, params
 from helpers import *
 import sys
+sys.setrecursionlimit(5500)
 
 globalProteinList = []
 globalPeptideList = []
+globalGoodPeptides = []
 
 def get_proteins(fname):
     name, sequence = None, None
@@ -18,16 +20,17 @@ def get_proteins(fname):
             sequence += line.strip()
     yield Protein(name, sequence)
 
-def generateSemiTryptic(protein, semiPeps):
-    for pep in protein.peptides:
+def generateSemiTryptic(semiPeps):
+    for pep in globalGoodPeptides:
         numPassedCleavages = 0
         numPassedPTS, numPassedM = 0, 0
         for i in range(1, len(pep.sequence)):
             if numPassedCleavages < max(1, pep.numRK - 1):
                 if goodPeptide(pep.neutralMass, pep.sequence[i:]):
-                    newPep = Peptide(pep.sequence[i:], massOfPep(pep.sequence[i:]), pep.numRK, pep.numPTS - numPassedPTS, pep.numM - numPassedM, pep.peptideProteinList)
+                    newPep = Peptide(pep.sequence[i:], massOfPep(pep.sequence[i:]), pep.numRK - numPassedCleavages, pep.numPTS - numPassedPTS, pep.numM - numPassedM, pep.peptideProteinList)
                     semiPeps.append(newPep)
                     #print numPassedCleavages, newPep.numRK, pep.sequence[:i], newPep
+                    #print newPep.numPTS, newPep.numM, pep.sequence[:i], pep.sequence[i:]
                 if enzymeChar(pep.sequence[i]):
                     numPassedCleavages += 1
                 numPassedPTS, numPassedM = checkForSpecialChar(pep.sequence[i], numPassedPTS, numPassedM)
@@ -68,10 +71,9 @@ def findGoodPeptides(temp):
     return proteinPeptideList 
 
 class Protein(object):
-    def __init__(self, name, sequence, peptides = []):
+    def __init__(self, name, sequence):
         self.name = name
         self.sequence = sequence
-        self.peptides = []
         globalProteinList.append(self)
 
     def __repr__(self):
@@ -98,6 +100,17 @@ class Peptide(object):
     def __repr__(self):
         return self.sequence
 
+    def __eq__(self, other):
+        return self.sequence == other.sequence and \
+                self.neutralMass == other.neutralMass and \
+                self.numRK == other.numRK and \
+                self.numPTS == other.numPTS and \
+                self.numM == other.numM
+
+    def merge(self, other):
+        self.peptideProteinList.extend(other.peptideProteinList)
+
+
 if len(sys.argv) < 2:
     print "\n\t###  Please supply one or more .fasta files for digestion"
     print "\t###  example:   ./peptideCreator.py test.fasta\n"
@@ -108,12 +121,14 @@ for fname in sys.argv[1:]:
         temp = digest(protein.sequence, protein)
         #print protein.sequence
         protein.peptides = findGoodPeptides(temp)
-        if params['SEMI_TRYPTIC']:
-            semiPeps = []
-            generateSemiTryptic(protein, semiPeps)
-            protein.peptides.extend(semiPeps)
-        #for pep in sorted(protein.peptides, key = lambda peptide: peptide.neutralMass):
-        #    print pep.neutralMass,'\t', pep.numPTS, pep.numM, pep.numRK, pep, pep.peptideProteinList
-        for pep in protein.peptides:
-            print pep.numPTS, pep.numM, pep.numRK, pep
+        globalGoodPeptides.extend(protein.peptides)
+
+if params['SEMI_TRYPTIC']:
+    semiPeps = []
+    generateSemiTryptic(semiPeps)
+    globalGoodPeptides.extend(semiPeps)
+#for pep in sorted(globalGoodPeptides, key = lambda peptide: peptide.neutralMass):
+#    print pep.numPTS, pep.numM, pep.numRK, pep
     
+#for pep in globalGoodPeptides:
+#    print pep.numPTS, pep.numM, pep.numRK, pep
