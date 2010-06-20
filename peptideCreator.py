@@ -120,8 +120,8 @@ for fname in sys.argv[1:]:
     for protein in get_proteins(fname):
         temp = digest(protein.sequence, protein)
         #print protein.sequence
-        protein.peptides = findGoodPeptides(temp)
-        globalGoodPeptides.extend(protein.peptides)
+        goodPeptides = findGoodPeptides(temp)
+        globalGoodPeptides.extend(goodPeptides)
 
 if params['SEMI_TRYPTIC']:
     semiPeps = []
@@ -130,5 +130,5 @@ if params['SEMI_TRYPTIC']:
 #for pep in sorted(globalGoodPeptides, key = lambda peptide: peptide.neutralMass):
 #    print pep.numPTS, pep.numM, pep.numRK, pep
     
-#for pep in globalGoodPeptides:
-#    print pep.numPTS, pep.numM, pep.numRK, pep
+for pep in globalGoodPeptides:
+    print pep.numPTS, pep.numM, pep.numRK, pep
