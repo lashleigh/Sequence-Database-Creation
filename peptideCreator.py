@@ -24,6 +24,9 @@ def generateSemiTryptic(semiPeps):
     for pep in globalGoodPeptides:
         numPassedCleavages = 0
         numPassedPTS, numPassedM = 0, 0
+        if enzymeChar(pep.sequence[0]):
+            numPassedCleavages += 1
+        numPassedPTS, numPassedM = checkForSpecialChar(pep.sequence[0], numPassedPTS, numPassedM)
         for i in range(1, len(pep.sequence)):
             if numPassedCleavages < max(1, pep.numRK - 1):
                 if goodPeptide(pep.neutralMass, pep.sequence[i:]):

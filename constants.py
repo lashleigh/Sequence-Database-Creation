@@ -54,4 +54,4 @@ params['MAX_LEN_DEFINITION'] = 50
 params['INITIAL_SEQ_LEN']    = 1000
 params['MAX_LEN_PROTEIN']    = 5000
 params['PROTON_MASS']        = 1.0072764668
-params['SEMI_TRYPTIC']       = False
+params['SEMI_TRYPTIC']       = True
